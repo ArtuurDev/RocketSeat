@@ -1,8 +1,6 @@
 import http from 'node:http'
 import { json } from './middlewares/json.js'
-import { Database } from '../database/database.js'
-
-const database = new Database()
+import { routes } from './routes/routes.js'
 
 const server = http.createServer(async(req, res) => {
 
@@ -10,27 +8,19 @@ const server = http.createServer(async(req, res) => {
 
     await json(req, res)
 
-    if (method === "GET" && url === "/tasks") {
-        const data = database.select('users')
-        return res
-        .setHeader('Content-type', 'application/json')
-        .end(JSON.stringify(data))
+    const route = routes.find((route) => {
+        return route.method === method && route.path.test(url)
+    })
+
+    if (route) {
+        const routeParams = req.url.match(route.path) 
+        req.params = {...routeParams.groups}
+        console.log(req.params)
+        return route.handler(req, res)
     }
+
+    return res.end('page not found')
     
-    if (method === "POST" && url === "/tasks") {
-        const {name, email} = req.body
-        
-        const users = {
-            id: crypto.randomUUID(),
-            name,
-            email
-        }
-        database.insert('users', users)
-    }
-    
-    return res
-    .setHeader('Content-type','application/json')
-    .writeHead(201).end()
 })
 
 server.listen(3000, () => {
