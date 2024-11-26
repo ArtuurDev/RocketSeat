@@ -5,8 +5,8 @@ const database = new Database()
 export const routes = [
 
     {
-        method: buildRoutePath("POST"),
-        path: '/users',
+        method: "POST",
+        path: buildRoutePath('/users'),
         handler: ((req, res) => {
             const {name, email} = req.body
         
@@ -24,7 +24,13 @@ export const routes = [
         method: "GET",
         path: buildRoutePath("/users"),
         handler: ((req,res) => {
-            const data = database.select('users')
+            const {search} = req.query
+            console.log(req.query)
+
+            const data = database.select('users', search ? {
+                name: search,
+                email: search
+            }: null)
             return res
             .setHeader('Content-type', 'application/json')
             .end(JSON.stringify(data))
@@ -37,6 +43,20 @@ export const routes = [
             const {id} = req.params
 
             database.delete('users', id)
+            return res.writeHead(204).end()
+
+        })
+    }, {
+        method: "PUT",
+        path: buildRoutePath('/users/:id'),
+        handler: ((req, res) => {
+            const {id} = req.params
+            const {name, email} = req.body
+            database.update('users', id, {
+                name,
+                email
+            })
+
             return res.writeHead(204).end()
 
         })
